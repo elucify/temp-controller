@@ -163,6 +163,7 @@ TempController::TempController(byte pinDin, byte pinClk, byte pinLoad, byte brig
 
 void TempController::init()
 {
+    // Nothing needed
 }
 
 TempController::~TempController()

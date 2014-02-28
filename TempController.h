@@ -101,6 +101,8 @@ protected:
              byte brightness, byte numDevices);
 };
 
+// Doesn't yet do anything except initialize DisplayBoard
+// Probably DisplayBoard should be in a separate library
 class TempController {
 public:
     TempController(byte pinDin = LC_DIN, byte pinClk = LC_CLK, byte pinLoad = LC_LOAD,
