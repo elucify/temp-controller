@@ -1,7 +1,7 @@
 TempController
 ==============
 
-C++ code for home-built Arduino temperature controller
+C++ Arduino library for home-built Arduino temperature controller
 
 Schematics for open source hardware to follow (if/when I have time)
 
