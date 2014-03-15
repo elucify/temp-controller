@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "TempController.h"
+#include <EEPROM.h>
 
 //
 // Notes: Refactoring test program to use TempController object
@@ -174,7 +175,7 @@ void TempController::run()
     if (b > -100.0) {
         temp_b = b;
     } else {
-        Serial.println("b failed");
+        Serial.println("B failed");
     }
   
     float diff_a = temp_a - ref_temp_a;
@@ -199,24 +200,27 @@ void TempController::run()
     delay(2000);
 }
 
+void TempController::readROM(DeviceAddress address, byte channel)
+{
+    for (unsigned int n = 0; n < 8; n++) {
+        byte c =  EEPROM.read((channel * 8) + n);
+        Serial.print("Read ");
+        Serial.println(c, HEX);
+        *(address + n) = c;
+    }
+}
+
+void TempController::writeROM(DeviceAddress address, byte channel)
+{
+    for (unsigned int n = 0; n < 8; n++) {
+        EEPROM.write((channel * 8) + n, *(address + n));
+    }
+}
+
 // Read thermometers and write to ROM -or- read thermometer addresses from ROM
 void TempController::initializeThermometers()
 {
-    // TODO: READ ROM
-    DeviceAddress thermometer_address_a = { 0x28, 0xFC, 0x74, 0xC9, 0x02, 0x00, 0x00, 0x86 };
-    DeviceAddress thermometer_address_b = { 0x28, 0xDA, 0x25, 0x55, 0x05, 0x00, 0x00, 0x53};
-    
-
-    // Copy addresses to working memory
-    memcpy(_thermometer_address[CHANNEL_A], thermometer_address_a, 8);
-    memcpy(_thermometer_address[CHANNEL_B], thermometer_address_b, 8);
-
-    // Initialize thermometer objects
-    _thermometers[CHANNEL_A] = new Thermometer(_thermometer_address[CHANNEL_A]);
-    _thermometers[CHANNEL_B] = new Thermometer(_thermometer_address[CHANNEL_B]);
-
     OneWire *wire = Thermometer::getOneWire();
-
 
     // If both buttons down on power-up, read and
     // report sensors
@@ -229,8 +233,6 @@ void TempController::initializeThermometers()
         Serial.println("> Scanning devices");
 
         while(wire->search(addr)) {
-
-            naddrs++;
 
             Serial.print("Device ");
             Serial.println(naddrs);
@@ -246,12 +248,36 @@ void TempController::initializeThermometers()
                 Serial.print(addr[i], HEX);
                 Serial.print(i == 7 ? "\n" : " ");
             }
+            naddrs++;
         }
         wire->reset_search();
+
+        // If only one, save to channel indicated by switch
+        if (naddrs == 1) {
+            if (_displayBoard.isSwitchLeft()) {
+                writeROM(addr, CHANNEL_A);
+                Serial.println("Saved probe to channel A");
+            } else if (_displayBoard.isSwitchRight()) {
+                writeROM(addr, CHANNEL_B);
+                Serial.println("Saved probe to channel B");
+            } else {
+                Serial.println("Switch centered, probe not saved");
+            }
+        } else {
+            Serial.println("More than one probe present, saving nothing");
+        }
 
         Serial.print("> Devices found: ");
         Serial.println(naddrs);
     }
+
+    // Read thermometer addresses from EEPROM (previously configured)
+    readROM(_thermometer_address[CHANNEL_A], CHANNEL_A);
+    readROM(_thermometer_address[CHANNEL_B], CHANNEL_B);
+
+    // Initialize thermometer objects based on addresses
+    _thermometers[CHANNEL_A] = new Thermometer(_thermometer_address[CHANNEL_A]);
+    _thermometers[CHANNEL_B] = new Thermometer(_thermometer_address[CHANNEL_B]);
 }
 
 // Initialize thermometers

@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Thermometer.h>
 #include "LedControl.h"
+#include <EEPROM.h>
 
 // Now we need a LedControl to work with.
 // ***** These pin numbers will probably not work with your hardware *****
@@ -150,6 +151,8 @@ class TempController {
     // protected methods
     //
     void initializeThermometers();
+    void readROM(DeviceAddress address, byte channel);
+    void writeROM(DeviceAddress address, byte channel);
 
 };
 
