@@ -197,7 +197,7 @@ void TempController::run()
                   diff_b < (-1 * tolerance_b),
                   diff_b > tolerance_b);
   
-    delay(2000);
+    delay(500);
 }
 
 void TempController::readROM(DeviceAddress address, byte channel)
